@@ -3,7 +3,6 @@ import openai
 from flask import Flask, request, jsonify
 
 app = Flask(__name__)
-
 openai.api_key = os.getenv("OPENAI_API_KEY")
 
 @app.route("/", methods=["POST"])
@@ -13,12 +12,12 @@ def handler():
         user_utterance = req['request']['original_utterance']
 
         if not user_utterance:
-            return jsonify(build_response("Я вас слушаю."))
+            return jsonify(build_response("Привет! Я тебя слушаю."))
 
         completion = openai.ChatCompletion.create(
             model="gpt-4o",
             messages=[
-                {"role": "system", "content": "Ты умный помощник, отвечай кратко."},
+                {"role": "system", "content": "Ты голосовой помощник Алисы. Отвечай кратко, по делу и дружелюбно."},
                 {"role": "user", "content": user_utterance}
             ]
         )
@@ -28,7 +27,7 @@ def handler():
 
     except Exception as e:
         print("Error:", e)
-        return jsonify(build_response("Произошла ошибка."))
+        return jsonify(build_response("Произошла ошибка. Попробуй ещё раз."))
 
 def build_response(text):
     return {
