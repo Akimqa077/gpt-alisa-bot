@@ -9,10 +9,12 @@ openai.api_key = os.getenv("OPENAI_API_KEY")
 def handler():
     try:
         req = request.json
-        user_utterance = req['request']['original_utterance']
+        version = req.get("version", "1.0")
+
+        user_utterance = req.get("request", {}).get("original_utterance", "")
 
         if not user_utterance:
-            return jsonify(build_response("Привет! Я тебя слушаю."))
+            return jsonify(build_response("Привет! Я тебя слушаю.", version))
 
         completion = openai.ChatCompletion.create(
             model="gpt-4o",
@@ -23,19 +25,19 @@ def handler():
         )
 
         answer = completion.choices[0].message.content
-        return jsonify(build_response(answer))
+        return jsonify(build_response(answer, version))
 
     except Exception as e:
-        print("Error:", e)
-        return jsonify(build_response("Произошла ошибка. Попробуй ещё раз."))
+        print("Ошибка:", e)
+        return jsonify(build_response("Произошла ошибка. Попробуй ещё раз.", "1.0"))
 
-def build_response(text):
+def build_response(text, version):
     return {
         "response": {
             "text": text,
             "end_session": False
         },
-        "version": "1.0"
+        "version": version
     }
 
 if __name__ == "__main__":
