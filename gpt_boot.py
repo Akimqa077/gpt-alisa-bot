@@ -9,36 +9,34 @@ openai.api_key = os.getenv("OPENAI_API_KEY")
 def handler():
     try:
         req = request.json
-        version = req.get("version", "1.0")
-        user_utterance = req.get("request", {}).get("original_utterance", "").strip()
+        user_utterance = req["request"]["original_utterance"]
 
-        # Если пользователь молчит — приветствие
-        if not user_utterance:
-            return jsonify(build_response("Привет! Я тебя слушаю. Задай мне любой вопрос.", version))
+        if not user_utterance.strip():
+            return jsonify(build_response("Привет! Я тебя слушаю. Задай мне любой вопрос."))
 
-        # Обращение к OpenAI
         completion = openai.ChatCompletion.create(
             model="gpt-4o",
             messages=[
-                {"role": "system", "content": "Ты голосовой помощник Яндекс Алисы. Отвечай кратко, по делу, вежливо."},
+                {"role": "system", "content": "Ты голосовой помощник Алисы. Отвечай кратко, по делу и дружелюбно."},
                 {"role": "user", "content": user_utterance}
             ]
         )
 
         answer = completion.choices[0].message.content
-        return jsonify(build_response(answer, version))
+        return jsonify(build_response(answer))
 
     except Exception as e:
-        print("⚠️ Ошибка:", e)
-        return jsonify(build_response("Произошла ошибка. Попробуй ещё раз.", "1.0"))
+        print("Error:", e)
+        return jsonify(build_response("Произошла ошибка. Попробуй ещё раз."))
 
-def build_response(text, version):
+def build_response(text):
     return {
         "response": {
             "text": text,
+            "tts": text,  # ⬅️ Голосовой ответ для Алисы
             "end_session": False
         },
-        "version": version
+        "version": "1.0"
     }
 
 if __name__ == "__main__":
