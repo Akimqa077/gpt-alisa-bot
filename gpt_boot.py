@@ -1,25 +1,43 @@
+from flask import Flask, request
 import telebot
-from openai import OpenAI
+import openai
+import os
 
-# 🔐 Подставь сюда свои реальные ключи
-TELEGRAM_TOKEN = "7726330072:AAGkhg-8gmZJ2i10_JYIkYnc9YJ7GqJ4IDQ"
-OPENAI_API_KEY = "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"
+# Получаем токены из переменных окружения
+BOT_TOKEN = os.getenv("7726330072:AAGkhg-8gmZJ2i10_JYIkYnc9YJ7GqJ4IDQ")
+OPENAI_API_KEY = os.getenv("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")
 
-bot = telebot.TeleBot(TELEGRAM_TOKEN)
-client = OpenAI(api_key=OPENAI_API_KEY)
+bot = telebot.TeleBot(BOT_TOKEN)
+openai.api_key = OPENAI_API_KEY
+
+# Создаём Flask-сервер
+app = Flask(__name__)
+
+# Обрабатываем команды Telegram
+@bot.message_handler(commands=['start'])
+def send_welcome(message):
+    bot.send_message(message.chat.id, "Привет! Я GPT-бот на базе модели GPT-4o.")
 
 @bot.message_handler(func=lambda message: True)
 def handle_message(message):
-    prompt = message.text
-    try:
-        response = client.chat.completions.create(
-            model="gpt-4o",
-            messages=[{"role": "user", "content": prompt}]
-        )
-        reply = response.choices[0].message.content.strip()
-        bot.send_message(message.chat.id, reply)
-    except Exception as e:
-        bot.send_message(message.chat.id, f"❌ GPT Error: {e}")
+    response = openai.ChatCompletion.create(
+        model="gpt-4o",
+        messages=[
+            {"role": "user", "content": message.text}
+        ]
+    )
+    reply = response.choices[0].message.content
+    bot.send_message(message.chat.id, reply)
 
-print("Бот запущен. Ждёт сообщений...")
-bot.polling()
+# Обработка входящих сообщений от Telegram через Webhook
+@app.route('/', methods=['POST'])
+def webhook():
+    update = telebot.types.Update.de_json(request.stream.read().decode("utf-8"))
+    bot.process_new_updates([update])
+    return '', 200
+
+# Запуск приложения + установка Webhook
+if __name__ == '__main__':
+    bot.remove_webhook()
+    bot.set_webhook(url='https://gpt-alisa-bot.onrender.com')  # ← сюда вставь свой URL Render
+    app.run(host="0.0.0.0", port=10000)
