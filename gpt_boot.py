@@ -4,8 +4,8 @@ import openai
 import os
 
 # Получаем токены из переменных окружения
-BOT_TOKEN = os.getenv("")
-OPENAI_API_KEY = os.getenv("")
+BOT_TOKEN = os.getenv("TELEGRAM_TOKEN")
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 
 bot = telebot.TeleBot(BOT_TOKEN)
 openai.api_key = OPENAI_API_KEY
