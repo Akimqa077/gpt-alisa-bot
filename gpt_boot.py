@@ -4,8 +4,8 @@ import openai
 import os
 
 # Получаем токены из переменных окружения
-BOT_TOKEN = os.getenv("7726330072:AAGkhg-8gmZJ2i10_JYIkYnc9YJ7GqJ4IDQ")
-OPENAI_API_KEY = os.getenv("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")
+BOT_TOKEN = os.getenv("")
+OPENAI_API_KEY = os.getenv("")
 
 bot = telebot.TeleBot(BOT_TOKEN)
 openai.api_key = OPENAI_API_KEY
