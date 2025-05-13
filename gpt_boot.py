@@ -1,39 +1,40 @@
 import os
-import openai
 from flask import Flask, request, jsonify
+from openai import OpenAI
 
+client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 app = Flask(__name__)
-openai.api_key = os.getenv("OPENAI_API_KEY")
 
 @app.route("/", methods=["POST"])
 def handler():
     try:
         req = request.json
-        user_utterance = req["request"]["original_utterance"]
+        utterance = req.get("request", {}).get("original_utterance", "")
 
-        if not user_utterance.strip():
+        # Если пользователь ничего не сказал
+        if not utterance.strip():
             return jsonify(build_response("Привет! Я тебя слушаю. Задай мне любой вопрос."))
 
-        completion = openai.ChatCompletion.create(
+        # GPT-4o запрос
+        response = client.chat.completions.create(
             model="gpt-4o",
             messages=[
-                {"role": "system", "content": "Ты голосовой помощник Алисы. Отвечай кратко, по делу и дружелюбно."},
-                {"role": "user", "content": user_utterance}
+                {"role": "system", "content": "Ты голосовой помощник Алисы. Отвечай коротко и понятно."},
+                {"role": "user", "content": utterance}
             ]
         )
+        answer = response.choices[0].message.content.strip()
 
-        answer = completion.choices[0].message.content
         return jsonify(build_response(answer))
 
     except Exception as e:
-        print("Error:", e)
+        print("Ошибка:", e)
         return jsonify(build_response("Произошла ошибка. Попробуй ещё раз."))
 
 def build_response(text):
     return {
         "response": {
             "text": text,
-            "tts": text,  # ⬅️ Голосовой ответ для Алисы
             "end_session": False
         },
         "version": "1.0"
