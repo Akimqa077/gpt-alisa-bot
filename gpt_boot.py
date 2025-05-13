@@ -1,43 +1,30 @@
 import os
-import openai
 from flask import Flask, request, jsonify
 
 app = Flask(__name__)
-openai.api_key = os.getenv("OPENAI_API_KEY")
 
 @app.route("/", methods=["POST"])
 def handler():
     try:
         req = request.json
-        user_utterance = req['request'].get('original_utterance', '').strip()
+        user_utterance = req["request"].get("original_utterance", "").strip()
 
         if not user_utterance:
             return jsonify(build_response("Привет! Я тебя слушаю. Задай мне любой вопрос."))
 
-        completion = openai.ChatCompletion.create(
-            model="gpt-4o",
-            messages=[
-                {"role": "system", "content": "Ты голосовой помощник Алисы. Отвечай кратко, по делу и дружелюбно."},
-                {"role": "user", "content": user_utterance}
-            ],
-            timeout=5
-        )
-
-        answer = completion.choices[0].message.content.strip()
-        if not answer:
-            answer = "Я не понял вопрос. Попробуй ещё раз."
-
-        return jsonify(build_response(answer))
+        # ВРЕМЕННЫЙ ответ (заглушка без GPT)
+        return jsonify(build_response(f"Ты сказал: {user_utterance}"))
 
     except Exception as e:
-        print("Error:", e)
+        print("Ошибка:", e)
         return jsonify(build_response("Произошла ошибка. Попробуй ещё раз."))
 
+
 def build_response(text):
-    print("Ответ Алисе:", text)
+    print("Ответ для Алисы:", text)
     return {
         "response": {
-            "text": text if text else "Извини, я не понял вопрос.",
+            "text": text[:1024],  # Ограничение на длину ответа
             "end_session": False
         },
         "version": "1.0"
