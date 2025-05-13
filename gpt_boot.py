@@ -1,41 +1,32 @@
 import os
 import openai
 from flask import Flask, request, jsonify
-import traceback
 
 app = Flask(__name__)
 openai.api_key = os.getenv("OPENAI_API_KEY")
 
 @app.route("/", methods=["POST"])
-def webhook():
+def handler():
     try:
-        req = request.get_json()
+        req = request.json
+        user_input = req.get("request", {}).get("original_utterance", "")
 
-        # Безопасная проверка входа
-        if not req or 'request' not in req:
-            return jsonify(build_response("Ошибка: пустой запрос."))
-
-        user_utterance = req["request"].get("original_utterance", "").strip()
-
-        if not user_utterance:
+        if not user_input.strip():
             return jsonify(build_response("Привет! Я тебя слушаю. Спроси что-нибудь."))
 
-        # Запрос к OpenAI
         completion = openai.ChatCompletion.create(
-            model="gpt-4o",  # или gpt-3.5-turbo, если gpt-4o недоступен
+            model="gpt-4o",
             messages=[
                 {"role": "system", "content": "Ты голосовой помощник Алисы. Отвечай кратко, дружелюбно и по делу."},
-                {"role": "user", "content": user_utterance}
+                {"role": "user", "content": user_input}
             ]
         )
 
-        answer = completion.choices[0].message.content.strip()
+        reply = completion.choices[0].message.content.strip()
+        return jsonify(build_response(reply))
 
-        return jsonify(build_response(answer))
-
-    except Exception:
-        # Печатаем ошибку в лог Render
-        print("Ошибка GPT:", traceback.format_exc())
+    except Exception as e:
+        print("Ошибка:", e)
         return jsonify(build_response("Произошла ошибка. Попробуй ещё раз."))
 
 def build_response(text):
