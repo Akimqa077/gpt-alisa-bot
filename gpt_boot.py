@@ -4,27 +4,28 @@ from flask import Flask, request, jsonify
 app = Flask(__name__)
 
 @app.route("/", methods=["POST"])
-def handler():
+def main():
     try:
         req = request.json
-        user_utterance = req["request"].get("original_utterance", "").strip()
+        utterance = req["request"].get("original_utterance", "").strip()
 
-        if not user_utterance:
-            return jsonify(build_response("Привет! Я тебя слушаю. Задай мне любой вопрос."))
+        # Если пользователь ничего не сказал
+        if not utterance:
+            return make_response("Привет! Я тебя слушаю. Спроси что-нибудь.")
 
-        # ВРЕМЕННЫЙ ответ (заглушка без GPT)
-        return jsonify(build_response(f"Ты сказал: {user_utterance}"))
+        # Заглушка (ответ без GPT, но работает стабильно)
+        reply = f"Ты сказал: {utterance}"
+        return make_response(reply)
 
     except Exception as e:
         print("Ошибка:", e)
-        return jsonify(build_response("Произошла ошибка. Попробуй ещё раз."))
+        return make_response("Произошла ошибка. Попробуй ещё раз.")
 
-
-def build_response(text):
-    print("Ответ для Алисы:", text)
+def make_response(text):
     return {
         "response": {
-            "text": text[:1024],  # Ограничение на длину ответа
+            "text": text[:1024],
+            "tts": text[:1024],  # Чтобы Алиса проговаривала голосом
             "end_session": False
         },
         "version": "1.0"
