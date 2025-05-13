@@ -9,24 +9,23 @@ openai.api_key = os.getenv("OPENAI_API_KEY")
 def handler():
     try:
         req = request.json
-        user_input = req.get("request", {}).get("original_utterance", "")
+        user_utterance = req["request"]["original_utterance"]
 
-        if not user_input.strip():
+        if not user_utterance.strip():
             return jsonify(build_response("Привет! Я тебя слушаю. Спроси что-нибудь."))
 
         completion = openai.ChatCompletion.create(
             model="gpt-4o",
             messages=[
-                {"role": "system", "content": "Ты голосовой помощник Алисы. Отвечай кратко, дружелюбно и по делу."},
-                {"role": "user", "content": user_input}
+                {"role": "system", "content": "Ты голосовой помощник Алисы. Отвечай кратко, по делу и дружелюбно."},
+                {"role": "user", "content": user_utterance}
             ]
         )
-
-        reply = completion.choices[0].message.content.strip()
-        return jsonify(build_response(reply))
+        answer = completion.choices[0].message.content.strip()
+        return jsonify(build_response(answer))
 
     except Exception as e:
-        print("Ошибка:", e)
+        print("Error:", e)
         return jsonify(build_response("Произошла ошибка. Попробуй ещё раз."))
 
 def build_response(text):
