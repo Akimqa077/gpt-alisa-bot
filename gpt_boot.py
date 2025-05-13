@@ -1,37 +1,36 @@
 import os
+import openai
 from flask import Flask, request, jsonify
-from openai import OpenAI
 
-client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 app = Flask(__name__)
+openai.api_key = os.getenv("OPENAI_API_KEY")
 
 @app.route("/", methods=["POST"])
 def handler():
     try:
         req = request.json
-        utterance = req.get("request", {}).get("original_utterance", "")
+        user_utterance = req["request"]["original_utterance"]
 
-        # Если пользователь ничего не сказал
-        if not utterance.strip():
+        if not user_utterance:
             return jsonify(build_response("Привет! Я тебя слушаю. Задай мне любой вопрос."))
 
-        # GPT-4o запрос
-        response = client.chat.completions.create(
+        completion = openai.ChatCompletion.create(
             model="gpt-4o",
             messages=[
-                {"role": "system", "content": "Ты голосовой помощник Алисы. Отвечай коротко и понятно."},
-                {"role": "user", "content": utterance}
+                {"role": "system", "content": "Ты голосовой помощник Алисы. Отвечай коротко, ясно и дружелюбно."},
+                {"role": "user", "content": user_utterance}
             ]
         )
-        answer = completion.choices[0].message.content.strip()
-if not answer:
-    answer = "Я не смог ничего ответить. Попробуй переформулировать вопрос."
 
+        answer = completion.choices[0].message.content.strip()
+
+        if not answer:
+            answer = "Я не понял вопрос. Попробуй ещё раз."
 
         return jsonify(build_response(answer))
 
     except Exception as e:
-        print("Ошибка:", e)
+        print("Error:", e)
         return jsonify(build_response("Произошла ошибка. Попробуй ещё раз."))
 
 def build_response(text):
