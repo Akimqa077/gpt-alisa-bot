@@ -34,9 +34,10 @@ def handler():
         return jsonify(build_response("Произошла ошибка. Попробуй ещё раз."))
 
 def build_response(text):
+    print("Ответ Алисе:", text)
     return {
         "response": {
-            "text": text,
+            "text": text if text else "Извини, я не понял вопрос.",
             "end_session": False
         },
         "version": "1.0"
