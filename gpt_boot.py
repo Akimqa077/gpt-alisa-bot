@@ -9,7 +9,7 @@ openai.api_key = os.getenv("OPENAI_API_KEY")
 def handler():
     try:
         req = request.json
-        user_utterance = req["request"]["original_utterance"]
+        user_utterance = req['request'].get('original_utterance', '').strip()
 
         if not user_utterance:
             return jsonify(build_response("Привет! Я тебя слушаю. Задай мне любой вопрос."))
@@ -17,13 +17,13 @@ def handler():
         completion = openai.ChatCompletion.create(
             model="gpt-4o",
             messages=[
-                {"role": "system", "content": "Ты голосовой помощник Алисы. Отвечай коротко, ясно и дружелюбно."},
+                {"role": "system", "content": "Ты голосовой помощник Алисы. Отвечай кратко, по делу и дружелюбно."},
                 {"role": "user", "content": user_utterance}
-            ]
+            ],
+            timeout=5
         )
 
         answer = completion.choices[0].message.content.strip()
-
         if not answer:
             answer = "Я не понял вопрос. Попробуй ещё раз."
 
