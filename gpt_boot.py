@@ -23,7 +23,10 @@ def handler():
                 {"role": "user", "content": utterance}
             ]
         )
-        answer = response.choices[0].message.content.strip()
+        answer = completion.choices[0].message.content.strip()
+if not answer:
+    answer = "Я не смог ничего ответить. Попробуй переформулировать вопрос."
+
 
         return jsonify(build_response(answer))
 
