@@ -1,34 +1,41 @@
 import os
 import openai
 from flask import Flask, request, jsonify
+import traceback
 
 app = Flask(__name__)
 openai.api_key = os.getenv("OPENAI_API_KEY")
 
 @app.route("/", methods=["POST"])
-def handler():
+def webhook():
     try:
-        data = request.json
-        user_input = data["request"].get("original_utterance", "")
+        req = request.get_json()
 
-        # Если пользователь ничего не сказал — приветствие
-        if not user_input.strip():
+        # Безопасная проверка входа
+        if not req or 'request' not in req:
+            return jsonify(build_response("Ошибка: пустой запрос."))
+
+        user_utterance = req["request"].get("original_utterance", "").strip()
+
+        if not user_utterance:
             return jsonify(build_response("Привет! Я тебя слушаю. Спроси что-нибудь."))
 
-        # Запрос к ChatGPT
-        chat_response = openai.ChatCompletion.create(
-            model="gpt-4o",
+        # Запрос к OpenAI
+        completion = openai.ChatCompletion.create(
+            model="gpt-4o",  # или gpt-3.5-turbo, если gpt-4o недоступен
             messages=[
-                {"role": "system", "content": "Ты умный голосовой помощник Алисы. Отвечай кратко, по делу и дружелюбно."},
-                {"role": "user", "content": user_input}
+                {"role": "system", "content": "Ты голосовой помощник Алисы. Отвечай кратко, дружелюбно и по делу."},
+                {"role": "user", "content": user_utterance}
             ]
         )
 
-        answer = chat_response.choices[0].message.content.strip()
+        answer = completion.choices[0].message.content.strip()
+
         return jsonify(build_response(answer))
 
-    except Exception as e:
-        print("Ошибка:", e)
+    except Exception:
+        # Печатаем ошибку в лог Render
+        print("Ошибка GPT:", traceback.format_exc())
         return jsonify(build_response("Произошла ошибка. Попробуй ещё раз."))
 
 def build_response(text):
